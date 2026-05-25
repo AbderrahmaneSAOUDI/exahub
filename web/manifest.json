@@ -1,6 +1,6 @@
 {
-    "name": "exahub",
-    "short_name": "exahub",
+    "name": "ExaHub",
+    "short_name": "ExaHub",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

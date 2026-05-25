@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/exahub.iml" filepath="$PROJECT_DIR$/exahub.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/exahub_android.iml" filepath="$PROJECT_DIR$/android/exahub_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ExaHub.iml" filepath="$PROJECT_DIR$/ExaHub.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/ExaHub_android.iml" filepath="$PROJECT_DIR$/android/ExaHub_android.iml" />
     </modules>
   </component>
 </project>

@@ -1,4 +1,4 @@
-# EXAHUB — EXAM ARCHIVE — FULL PROJECT DOCUMENTATION
+# EXAM ARCHIVE — FULL PROJECT DOCUMENTATION
 
 > **Version:** 1.0  
 > **Status:** MVP Definition Complete — Ready to Build  
