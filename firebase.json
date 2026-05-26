@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"exahub-firebase","configurations":{"android":"1:719366508941:android:5ae9f91032e7eec74f6dc4","web":"1:719366508941:web:1d99048e2c3e91044f6dc4"}}},"android":{"default":{"projectId":"exahub-firebase","appId":"1:719366508941:android:5ae9f91032e7eec74f6dc4","fileOutput":"android/app/google-services.json"}}}}}

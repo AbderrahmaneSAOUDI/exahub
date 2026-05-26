@@ -1,102 +1,158 @@
 # Authentication & Access Control System
 
-## 1. User States & Privileges
-The Exam Archive implements a simple but powerful dual-state access model. There are no tier lists, no premium subscriptions, and no financial transactions. Access is governed purely by community contribution.
-
-### Standard User
-* **Method of Entry**: Register a new account via email/password.
-* **Privileges**:
-  * Browse the complete directory of approved exam papers.
-  * Apply filters to search metadata.
-  * **Download limit**: Up to **10 total files** in their lifetime.
-  * **Download style**: Online streaming preview only. Files are not saved to the device's storage.
-* **Upgrade Path**: Submit an exam paper that successfully passes moderation. Once approved, the user is permanently promoted to Contributor.
-
-### Contributor User
-* **Method of Entry**: Have at least one (1) uploaded exam approved by a moderator.
-* **Privileges**:
-  * Browse the complete directory of approved exam papers.
-  * **Download limit**: **Unlimited** downloads.
-  * **Download style**: Encrypted local download. Files are saved securely in app-exclusive storage (invisible in standard gallery or system file managers) for robust offline viewing.
-* **Revocation Policy**: **Permanent status**. Once a user becomes a Contributor, they remain a Contributor forever.
+> **Document Version:** 2.1 — Greenfield Build
+> **Last Updated:** May 26, 2026
 
 ---
 
-## 2. Access States Summary
+## 1. Authentication Provider
 
-| Feature | Standard User | Contributor User |
-|---|---|---|
-| **Limit Cap** | 10 Downloads | Unlimited Downloads |
-| **Download Type** | Web/API Online Streaming Only | Encrypted Local / Offline File Cache |
-| **Cost** | Free (Email sign up) | Free (1 Approved Contribution) |
-| **Duration** | Temporary (Until 10 downloads) | Permanent |
+### Firebase Authentication — Google + Email/Password
 
----
+| Property | Value |
+|---|---|
+| Provider | Firebase Authentication |
+| Method | Google Sign-In and Email/Password |
+| Required profile fields | `displayName`, `email` |
+| Phone auth | Excluded from MVP |
+| Anonymous auth | Not used |
+| Other social providers | Disabled |
 
-## 3. The 10-Download Guard Logic
-The app maintains a strict client-side and server-side verification pattern to ensure download limits are respected.
+### Registration Flow
 
-### Guard Pseudocode / Application Logic
-
-```javascript
-async function handleExamDownloadRequest(user, exam) {
-  // 1. Fetch current user data from Firestore cache/source
-  const userDoc = await firestore.collection('users').doc(user.uid).get();
-  const userData = userDoc.data();
-
-  // 2. Check if user is a Contributor
-  if (userData.isContributor === true) {
-    // Unlimited Access: Proceed with offline encrypted file download
-    return proceedWithEncryptedDownload(exam);
-  }
-
-  // 3. If standard user, verify the download count
-  if (userData.downloadCount >= 10) {
-    // Guard triggered: Reject download and prompt contribution
-    showLimitReachedModal();
-    return;
-  }
-
-  // 4. If count is < 10, proceed with streaming download
-  const downloadSuccess = await proceedWithOnlineStream(exam);
-  
-  if (downloadSuccess) {
-    // 5. Increment count in both Firestore and local state
-    await firestore.collection('users').doc(user.uid).update({
-      downloadCount: admin.firestore.FieldValue.increment(1)
-    });
-  }
-}
-
-function showLimitReachedModal() {
-  showModal({
-    title: "Limit Reached",
-    body: "You've reached your 10-file limit. Upload one approved exam to unlock unlimited downloads forever.",
-    actionButtonText: "Upload Now",
-    actionRoute: "/upload"
-  });
-}
+```text
+User opens app -> Auth screen
+    -> Chooses Google or Email/Password
+    -> Firebase creates account (UID)
+    -> Server trigger creates users document:
+       {
+         id,
+         email,
+         displayName,
+         isContributor: false,
+         isModerator: false,
+         isProfessor: false,
+         isAdmin: false,
+         downloadCount: 0,
+         uploadCount: 0,
+         createdAt
+       }
 ```
 
-### UX Design Pattern on Cap Trigger
-When the Standard user reaches their 11th download attempt, the app blocks the file delivery and presents a dialog stating:
-> **"You've reached your 10-file limit. Upload one approved exam to unlock unlimited downloads."**
+---
 
-This dialog provides a primary CTA button that navigates directly to the Upload Screen.
+## 2. User States & Privileges
+
+### Standard User
+- Browse approved exams
+- Upload submissions (go to pending review)
+- Download cap: 10 files total
+- Download behavior: encrypted in-app file storage
+- If limit reached: keep download button active, show popup each click
+
+### Contributor User
+- Unlocked after first approved upload
+- Unlimited downloads
+- Counters continue increasing (`downloadCount`, `uploadCount`) for statistics
+
+### Professor User
+- Assigned by admin
+- Uploads are auto-approved
+- Unlimited downloads
+- Counters continue increasing and visible in profile
+
+### Moderator User
+- Assigned/promoted by admin
+- Can approve/reject submissions
+- Uploads are auto-approved
+- Unlimited downloads
+- Counters continue increasing and visible in profile
+
+### Admin User
+- Full access to app operations
+- Promotes users to moderators
+- Manages role assignment (`isModerator`, `isProfessor`, `isAdmin`)
 
 ---
 
-## 4. Anti-Piracy & Integrity Safeguards
+## 3. Access Control Matrix
 
-### Watermarking
-Every single PDF paper served by the platform undergoes server-side/service-layer watermarking using a PDF manipulation library before it is streamed or cached locally. 
-- The watermark prominently stamps the **Exam Archive** logo and support text along the margins of each page.
-- **Strategic Value**: If a student circumvents local device locks and shares a PDF manually over WhatsApp or Telegram, it acts as organic promotion for the platform.
+| Feature | Anonymous | Standard | Contributor | Professor | Moderator | Admin |
+|---|---|---|---|---|---|---|
+| Browse approved exams | No | Yes | Yes | Yes | Yes | Yes |
+| Upload exam (pending) | No | Yes | Yes | No | No | No |
+| Upload exam (auto-approved) | No | No | No | Yes | Yes | Yes |
+| Download encrypted files | No | Yes (max 10) | Yes | Yes | Yes | Yes |
+| Moderate approvals/rejections | No | No | No | No | Yes | Yes |
+| Promote moderators | No | No | No | No | No | Yes |
 
-### Encrypted Local Downloads
-For Contributors, downloaded exams are kept secure using AES encryption or Flutter's secure storage keys (`flutter_secure_storage` combined with directory isolation). 
-- Files are stored in the application's private documents directory.
-- Files do not show up in the Android/iOS built-in download history or photo gallery, preventing easy bulk forwarding.
+---
 
-### Credential Protection
-Since the contributor status is tied directly to the registered email account ID and its specific upload records, users have a strong incentive not to share credentials (as doing so risks their account lockout or credentials resetting).
+## 4. 10-Download Guard Logic
+
+```text
+User taps Download
+    -> Read authoritative user state
+    -> If Standard and downloadCount >= 10
+          show modal: [Upload Now] [Upload Later]
+          (modal is closable)
+    -> Else allow secure download
+    -> On successful delivery: increment downloadCount for ALL roles
+```
+
+### UX Rules
+- Modal is closable.
+- Buttons are exactly: **Upload Now** and **Upload Later**.
+- Download button never disappears; it always triggers logic.
+
+### Counter Rules
+- `downloadCount` increments after successful delivery for all users.
+- `uploadCount` increments after successful approved uploads.
+- Counters stay tracked even after contributor unlock; contributor users just do not see hard cap behavior.
+
+---
+
+## 5. Role Transition: Standard -> Contributor
+
+```text
+Moderator/Admin approves first pending upload
+    -> Move file Pending -> Approved (same deep path structure)
+    -> Update exam approvalStatus = true
+    -> Update user isContributor = true
+    -> Increment uploadCount
+    -> Send approval notification
+```
+
+Notes:
+- Contributor status remains permanent in MVP.
+- `downloadCount` remains tracked in background for later analytics/score systems.
+
+---
+
+## 6. File Security Model
+
+### 6.1 Watermarking
+- Watermarking is performed once at upload processing time.
+- Files are not repeatedly watermarked at each download.
+- Output is the stored file used for future delivery.
+
+### 6.2 Encrypted In-App Storage (All Users)
+- All delivered files are stored as encrypted in-app blobs.
+- Applies to Standard, Contributor, Professor, Moderator, and Admin users.
+- Web uses browser-private encrypted storage wrapper.
+- Mobile uses internal app storage with encryption.
+
+### 6.3 Screenshots
+- Screenshots are allowed.
+- No screenshot prevention is implemented.
+
+---
+
+## 7. Firebase Auth Configuration Checklist
+
+- [ ] Enable Google provider
+- [ ] Enable Email/Password provider
+- [ ] Disable Phone and Anonymous
+- [ ] Disable unused social providers
+- [ ] Ensure signup captures `displayName`
+- [ ] Enforce server-side checks for moderator/admin operations

@@ -1,0 +1,29 @@
+name: Deploy Firestore Rules & Functions
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    name: Deploy to Firebase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (if any)
+        run: npm ci --prefer-offline || true
+
+      - name: Deploy Firestore rules and Functions
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          npx --yes firebase-tools@latest deploy \
+            --only firestore:rules,functions \
+            --project exahub-firebase --token "$FIREBASE_TOKEN"

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "719366508941",
+    "project_id": "exahub-firebase",
+    "storage_bucket": "exahub-firebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719366508941:android:5ae9f91032e7eec74f6dc4",
+        "android_client_info": {
+          "package_name": "com.exahub.exahub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtyZ9cUODlG0t8MWctseFp31O-YrkB0Tw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

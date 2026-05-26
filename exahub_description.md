@@ -1,4 +1,4 @@
-# EXAM ARCHIVE — FULL PROJECT DOCUMENTATION
+# EXAHUB — EXAM ARCHIVE — FULL PROJECT DOCUMENTATION
 
 > **Version:** 1.0  
 > **Status:** MVP Definition Complete — Ready to Build  
@@ -33,7 +33,7 @@
 
 ## 1. PROJECT OVERVIEW
 
-**Exam Archive** is a free, community-powered mobile application that centralizes past university exam papers in one organized, searchable platform. Students can browse, filter, and download exam papers from previous years and semesters. The platform is sustained by student contributions — users who upload approved exams unlock additional features, creating a self-reinforcing contribution loop.
+**ExaHub** is a free, community-powered mobile application that centralizes past university exam papers in one organized, searchable platform. Students can browse, filter, and download exam papers from previous years and semesters. The platform is sustained by student contributions — users who upload approved exams unlock additional features, creating a self-reinforcing contribution loop.
 
 The app is built with the intent of being a public utility — free forever, self-sustaining after setup, and designed to outlast its founder.
 
@@ -127,8 +127,7 @@ User opens app
     → User browses and filters metadata
     → User requests download
     → App fetches file via Google Drive API using stored Drive link
-    → Watermark applied before delivery
-    → File delivered: streamed (Standard) or encrypted local save (Contributor)
+    → File delivered: stored as encrypted local blob for all users
 ```
 
 ### Performance Considerations
@@ -174,8 +173,12 @@ User opens app
 |---|---|---|
 | `id` | Auto-generated | Firebase Auth UID |
 | `email` | String | Registration email |
+| `displayName` | String | Used for display/scoring |
 | `isContributor` | Boolean | `false` by default; `true` when first upload approved |
-| `downloadCount` | Integer | Tracks Standard user downloads; resets irrelevant once Contributor |
+| `isModerator` | Boolean | `false` by default |
+| `isProfessor` | Boolean | `false` by default |
+| `isAdmin` | Boolean | `false` by default |
+| `downloadCount` | Integer | Tracks downloads for all users |
 | `uploadCount` | Integer | Total approved uploads by this user |
 | `createdAt` | Timestamp | Registration date |
 
@@ -183,19 +186,22 @@ User opens app
 
 ## 8. ACCESS MODEL
 
-Two permanent user states. Simple logic, no subscriptions, no payments.
+Multiple permanent user states. Simple logic, no subscriptions, no payments.
 
 ### Standard User
 - **How to get it:** Register an account
 - **What you can do:** Browse all approved exams, download up to **10 files** total
-- **Download type:** Online streaming only
+- **Download type:** Encrypted local storage caching
 - **Upgrade path:** Submit one exam that gets approved → permanently becomes Contributor
 
 ### Contributor User
 - **How to get it:** Have one uploaded exam approved by a moderator
 - **What you can do:** Browse all approved exams, download unlimited files
-- **Download type:** Encrypted local storage — files saved invisibly on device, not visible in the system file manager
+- **Download type:** Encrypted local storage caching
 - **Status:** Permanent — never revoked
+
+### Professor / Moderator / Admin
+- **Privileges:** Assigned by admin. Uploads auto-approve for professors/mods. Unlimited downloads. Counters remain active. Includes specific management privileges based on role tier.
 
 ### The Logic Behind the Model
 
@@ -223,7 +229,7 @@ With a direct link to the upload screen.
 ### Crowdsourced Uploads
 - Any registered user can submit an exam via the in-app upload form
 - All 9 metadata fields are mandatory — upload button remains disabled until all fields are completed
-- PDF format only — all other formats rejected at file selection
+- Accept PDF and image files (JPG/PNG)
 - Submitted file goes directly to the Google Drive "Pending" folder
 - Firestore record created with `approvalStatus: false`
 
@@ -286,10 +292,10 @@ When the founder graduates or becomes unavailable, moderator access is transferr
 ## 12. ANTI-PIRACY STRATEGY
 
 ### Watermarking — Primary Defense
-Every approved file is watermarked with the app name before delivery to the user. Leaked PDFs become free advertising. A student who shares an exam outside the app inadvertently promotes the platform. Piracy becomes a distribution channel rather than a threat.
+Every approved file is watermarked with the app name at upload/processing time. Leaked PDFs become free advertising. A student who shares an exam outside the app inadvertently promotes the platform. Piracy becomes a distribution channel rather than a threat.
 
 ### Encrypted Local Downloads — Secondary Defense
-Contributor downloads are stored in encrypted local storage, invisible in the device file manager. Students cannot easily locate and forward the raw file through standard file sharing. This adds friction without destroying the user experience.
+All downloads (regardless of user role) are stored in encrypted local storage, invisible in the device file manager. Students cannot easily locate and forward the raw file through standard file sharing. This adds friction without destroying the user experience.
 
 ### Contributor Account Integrity
 Shared accounts lose upload history and therefore lose contributor status verification. Sharing login credentials has a meaningful cost — the recipient gets standard access, not contributor access, because the upload record is tied to the original account.

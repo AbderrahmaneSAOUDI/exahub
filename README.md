@@ -1,32 +1,50 @@
 # ExaHub
 
-ExaHub is a Flutter app for organizing and sharing past university exam papers in one searchable place. It is designed as a community-powered archive for students who need fast access to previous exams, filtered by university, department, module, year, semester, and exam type.
+ExaHub is a free, community-powered Flutter app for organizing and sharing past university exam papers in one searchable place. It is designed as an archive for students who need fast access to previous exams, filtered by university, department, module, year, semester, and exam type.
 
-## What it does
+## Core Features
 
-- Browse approved exam papers
-- Filter exams by key metadata
-- Upload new papers for review
-- Let moderators approve or reject submissions
-- Support student contributions through a simple unlock model
+- **Browse & Filter**: Find approved exam papers effortlessly.
+- **Fair Access Model**: Standard users get 10 downloads. Uploading a single approved exam unlocks unlimited contributor access.
+- **Secure File Delivery**: Exams are stored in an encrypted in-app cache to mitigate organic piracy.
+- **Uploads & Moderation**: Users can upload new papers (PDF, PNG, JPG) to a pending queue for review by student moderators.
 
-## Tech Stack
+## Tech Stack & Architecture
 
-- Flutter for the app
-- Firebase Authentication for sign-in
-- Firebase Firestore for exam metadata
-- Google Drive for file storage and delivery
+ExaHub follows a **Feature-First Architecture** inside the Flutter codebase. 
+
+- **Frontend**: Flutter (Mobile + Web)
+- **State Management**: Riverpod (`@riverpod` generation)
+- **Authentication**: Firebase Auth (Google & Email/Password)
+- **Database**: Cloud Firestore (Aggressively cached locally)
+- **File Storage & Delivery**: Google Drive API (For zero-cost high-volume file delivery)
 
 ## Getting Started
 
-```bash
-flutter pub get
-flutter run
-```
+1. **Install Dependencies**
+   ```bash
+   flutter pub get
+   ```
 
-## Project Status
+2. **Configure Firebase**  
+   We have Firebase configured for Web and Android. Ensure you have the FlutterFire CLI installed:
+   ```bash
+   dart pub global activate flutterfire_cli
+   ~/.pub-cache/bin/flutterfire configure --project=exahub-firebase
+   ```
 
-This repository is the main Flutter app for ExaHub. The detailed product spec and planning notes live in the `project-docs/` folder.
+3. **Run the App**
+   ```bash
+   flutter run -d chrome  # Run on web
+   # OR
+   flutter run            # Run on available Android device/emulator
+   ```
+
+## Project Status & Documentation
+
+This repository is the main Flutter app for ExaHub. 
+- The **source of truth** for the overarching vision and rules is `exahub_description.md`.
+- Tactical specs, architecture blueprints, data models, and access guard logic are isolated within the `project-docs/` folder.
 
 ## License
 
